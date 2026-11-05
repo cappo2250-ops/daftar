@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>دفتر التحويلات</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;700&display=swap">
+<style>
+/* Layout: single-column ledger book. Balances on top, two entry forms side by side, full ledger table, statement export. */
+:root{
+  --bg:#eef2f1; --surface:#ffffff; --ink:#14282b; --muted:#5d7173; --line:#d3dddc;
+  --accent:#0f6b66; --accent-ink:#ffffff; --in:#1a7f4b; --out:#b4412f; --warn-bg:#fdf3d8; --warn-ink:#6b4e00; --soft:#e3ecea;
+  --font-display:'Readex Pro','Segoe UI',Tahoma,sans-serif;
+  --font-body:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1a1b; --surface:#172426; --ink:#e4eeed; --muted:#8fa6a7; --line:#2a3d3f;
+  --accent:#4fc3b8; --accent-ink:#06201e; --in:#5ccf94; --out:#ef8a78; --warn-bg:#3a3014; --warn-ink:#f2d98a; --soft:#1f3133; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a1b; --surface:#172426; --ink:#e4eeed; --muted:#8fa6a7; --line:#2a3d3f;
+  --accent:#4fc3b8; --accent-ink:#06201e; --in:#5ccf94; --out:#ef8a78; --warn-bg:#3a3014; --warn-ink:#f2d98a; --soft:#1f3133; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6;direction:rtl;
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2,h3{font-family:var(--font-display);margin:0;text-wrap:balance;line-height:1.3}
+h1{font-size:1.7rem}
+h2{font-size:1.15rem}
+h3{font-size:1rem}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;color:var(--muted);font-weight:500}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;padding-bottom:14px;border-bottom:2px solid var(--ink)}
+.total{text-align:left}
+.total b{font-family:var(--font-display);font-size:1.5rem;font-variant-numeric:tabular-nums}
+.banner{background:var(--warn-bg);color:var(--warn-ink);padding:10px 14px;border-radius:6px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+section{display:flex;flex-direction:column;gap:12px;min-width:0}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.hint{color:var(--muted);font-size:.85rem}
+.people{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.person{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;text-align:right;font:inherit;color:inherit;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.person[aria-pressed="true"]{outline:2px solid var(--accent);background:var(--soft)}
+.person .n{font-weight:600}
+.person .b{font-family:var(--font-display);font-size:1.25rem;font-variant-numeric:tabular-nums}
+.person .s{font-size:.78rem;color:var(--muted)}
+.neg{color:var(--out)}
+.forms{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px}
+form{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+form.in{border-top:4px solid var(--in)} form.out{border-top:4px solid var(--out)}
+label{display:flex;flex-direction:column;gap:4px;font-size:.85rem;color:var(--muted);font-weight:500;min-width:0}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:9px 10px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:420px){.row2{grid-template-columns:1fr}}
+button{font:inherit;cursor:pointer;border-radius:5px;padding:9px 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-weight:500}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.danger{color:var(--out);border-color:var(--out)}
+button.small{padding:4px 9px;font-size:.8rem}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters select{width:auto;flex:1 1 150px}
+.tablebox{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table{border-collapse:collapse;width:100%;min-width:720px}
+th,td{padding:9px 12px;text-align:right;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.78rem;color:var(--muted);letter-spacing:.04em;background:var(--soft);font-weight:600}
+td.amt{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+td.in{color:var(--in)} td.out{color:var(--out)}
+tr.cx td{opacity:.55;text-decoration:line-through}
+tr.cx td.act,tr.cx td.act *{text-decoration:none}
+.tag{display:inline-block;font-size:.72rem;padding:1px 8px;border-radius:99px;border:1px solid currentColor}
+.empty{padding:22px;text-align:center;color:var(--muted)}
+.actions{display:flex;gap:6px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}
+.modal{background:var(--surface);border-radius:8px;padding:18px;width:min(460px,100%);max-height:90vh;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.modal .btns{display:flex;gap:8px;justify-content:flex-start}
+.toast{position:fixed;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:6px;z-index:30;max-width:90vw}
+.err{color:var(--out);font-size:.85rem;min-height:1.2em}
+.stmt{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.stmt .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.login{background:var(--surface);border-radius:8px;padding:20px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">قيود القبض والصرف بالجنيه المصري</div>
+      <h1>دفتر التحويلات</h1>
+    </div>
+    <div class="total"><div class="eyebrow">إجمالي الأرصدة الحالية</div><b id="grand">0</b> <span class="hint">جنيه</span></div>
+    <button id="logout" class="small" hidden>تسجيل خروج</button>
+  </header>
+
+  <div class="banner" id="demoBanner" hidden>
+    <span>الأرقام والأسماء الظاهرة أمثلة تجريبية. امسحها وابدأ بقيودك.</span>
+    <button id="clearDemo" class="small">مسح الأمثلة</button>
+  </div>
+
+  <section>
+    <div class="sec-head"><h2>الأرصدة حسب الشخص</h2><span class="hint">اضغط على شخص لتصفية القيود بالأسفل</span></div>
+    <div class="people" id="people"></div>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>تسجيل حركة</h2></div>
+    <div class="forms">
+      <form class="in" id="formIn" autocomplete="off">
+        <h3>تحويل وارد (قبض)</h3>
+        <label>اسم المُرسِل<input id="inName" required list="namesList" placeholder="مثال: أحمد"></label>
+        <div class="row2">
+          <label>المبلغ (جنيه)<input id="inAmt" type="number" inputmode="decimal" min="0.01" step="0.01" required></label>
+          <label>التاريخ والوقت<input id="inDt" type="datetime-local" required></label>
+        </div>
+        <label>الهدف من التحويل<input id="inDesc" placeholder="مثال: مصاريف شهر نوفمبر"></label>
+        <label>الحساب المُحوَّل عليه
+          <select id="inAcct"><option>إنستاباي</option><option>فودافون كاش</option><option>حساب بنكي</option><option>نقدًا</option></select>
+        </label>
+        <div class="err" id="inErr"></div>
+        <button class="primary" type="submit">تسجيل التحويل</button>
+      </form>
+
+      <form class="out" id="formOut" autocomplete="off">
+        <h3>صرف من رصيد شخص</h3>
+        <label>اتصرف من رصيد مين؟<select id="outName" required></select></label>
+        <div class="row2">
+          <label>المبلغ (جنيه)<input id="outAmt" type="number" inputmode="decimal" min="0.01" step="0.01" required></label>
+          <label>التاريخ والوقت<input id="outDt" type="datetime-local" required></label>
+        </div>
+        <label>البند / الغرض<input id="outDesc" required placeholder="مثال: شراء مستلزمات"></label>
+        <label>ملاحظات (اختياري)<input id="outNote"></label>
+        <div class="err" id="outErr"></div>
+        <button class="primary" type="submit">تسجيل الصرف</button>
+      </form>
+    </div>
+    <datalist id="namesList"></datalist>
+  </section>
+
+  <section>
+    <div class="sec-head"><h2>كل القيود</h2><span class="hint" id="count"></span></div>
+    <div class="filters">
+      <select id="fPerson"></select>
+      <select id="fType"><option value="all">قبض وصرف</option><option value="in">قبض فقط</option><option value="out">صرف فقط</option></select>
+      <select id="fStatus"><option value="all">كل القيود (بما فيها الملغي)</option><option value="active">القيود السارية فقط</option><option value="cx">الملغي فقط</option></select>
+    </div>
+    <div class="tablebox">
+      <table>
+        <thead><tr><th>التاريخ</th><th>النوع</th><th>الشخص</th><th>المبلغ</th><th>البيان</th><th>الحساب / ملاحظات</th><th></th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="stmt">
+    <div class="sec-head"><h2>كشف حساب</h2><span class="hint">ينسخ الكشف، والصقه في Excel أو واتساب</span></div>
+    <div class="grid">
+      <label>الشخص<select id="sPerson"></select></label>
+      <label>من تاريخ<input id="sFrom" type="date"></label>
+      <label>إلى تاريخ<input id="sTo" type="date"></label>
+    </div>
+    <div class="hint" id="sSum"></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="primary" id="copyTsv">نسخ للصقه في Excel</button>
+      <button id="copyText">نسخ كنص للواتساب</button>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="editOv" hidden>
+  <form class="modal" id="editForm">
+    <h3>تعديل القيد</h3>
+    <label>نوع الحركة<select id="eType"><option value="in">قبض (تحويل وارد)</option><option value="out">صرف من الرصيد</option></select></label>
+    <label>الشخص<input id="ePerson" required list="namesList"></label>
+    <div class="row2">
+      <label>المبلغ (جنيه)<input id="eAmt" type="number" step="0.01" min="0.01" required></label>
+      <label>التاريخ والوقت<input id="eDt" type="datetime-local" required></label>
+    </div>
+    <label>البيان<input id="eDesc"></label>
+    <label>الحساب / ملاحظات<input id="eAcct"></label>
+    <div class="btns"><button class="primary" type="submit">حفظ التعديلات</button><button type="button" id="eClose">إغلاق</button></div>
+  </form>
+</div>
+
+<div class="overlay" id="cxOv" hidden>
+  <form class="modal" id="cxForm">
+    <h3>إلغاء القيد</h3>
+    <div class="hint" id="cxInfo"></div>
+    <label>سبب الإلغاء (اختياري)<input id="cxReason"></label>
+    <div class="btns"><button class="danger" type="submit">إلغاء القيد</button><button type="button" id="cxClose">رجوع</button></div>
+  </form>
+</div>
+
+<div class="overlay" id="loginOv">
+  <form class="login" id="loginForm">
+    <h3>دخول دفتر التحويلات</h3>
+    <label>الإيميل<input id="lEmail" type="email" required autocomplete="username"></label>
+    <label>كلمة السر<input id="lPass" type="password" required autocomplete="current-password"></label>
+    <div class="err" id="lErr"></div>
+    <button class="primary" type="submit">دخول</button>
+  </form>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,signOut} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import {getFirestore,doc,onSnapshot,setDoc} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+const firebaseConfig={
+  apiKey:"AIzaSyDzo9U-lkn8wsb6hfaLxPhNYqHl0iX--S0",
+  authDomain:"daftar-tahwilat.firebaseapp.com",
+  projectId:"daftar-tahwilat",
+  storageBucket:"daftar-tahwilat.firebasestorage.app",
+  messagingSenderId:"685653709339",
+  appId:"1:685653709339:web:cc231605afcb5624d69ebe"
+};
+const fbApp=initializeApp(firebaseConfig),auth=getAuth(fbApp),db=getFirestore(fbApp);
+const ref=doc(db,'ledger','main');
+(function(){
+  var KEY='ledger-v1';
+  var $=function(id){return document.getElementById(id)};
+  var state={entries:[],demo:false,filterPerson:'all'};
+  var editId=null,cxId=null,toastT=null;
+
+  function save(){
+    setDoc(ref,{entries:state.entries}).catch(function(){toast('تعذّر حفظ آخر تغيير، تأكد من الاتصال وحاول تاني')});
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+  function fmt(n){return (Math.round(n*100)/100).toLocaleString('en-US',{maximumFractionDigits:2})}
+  function p2(n){return n<10?'0'+n:''+n}
+  function fdt(ms){var d=new Date(ms);return p2(d.getDate())+'/'+p2(d.getMonth()+1)+'/'+d.getFullYear()+' '+p2(d.getHours())+':'+p2(d.getMinutes())}
+  function toLocalInput(ms){var d=new Date(ms);return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())+'T'+p2(d.getHours())+':'+p2(d.getMinutes())}
+  function nowInput(){return toLocalInput(Date.now())}
+  function toast(m){var t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true},2400)}
+
+  function balances(){
+    var m={};
+    state.entries.forEach(function(e){
+      if(e.cancelled)return;
+      var p=m[e.person]||(m[e.person]={name:e.person,inn:0,out:0});
+      if(e.type==='in')p.inn+=e.amount;else p.out+=e.amount;
+    });
+    return Object.keys(m).map(function(k){var p=m[k];p.bal=p.inn-p.out;return p}).sort(function(a,b){return b.bal-a.bal});
+  }
+  function allNames(){var s={};state.entries.forEach(function(e){s[e.person]=1});return Object.keys(s)}
+
+  function renderPeople(){
+    var b=balances(),box=$('people'),tot=0;
+    b.forEach(function(p){tot+=p.bal});
+    $('grand').textContent=fmt(tot);
+    if(!b.length){box.innerHTML='<div class="empty" style="grid-column:1/-1;background:var(--surface);border:1px solid var(--line);border-radius:6px">لسه مفيش قيود. ابدأ بإضافة تحويل وارد من النموذج تحت.</div>';return}
+    box.innerHTML=b.map(function(p){
+      return '<button type="button" class="person" data-p="'+esc(p.name)+'" aria-pressed="'+(state.filterPerson===p.name)+'">'
+        +'<span class="n">'+esc(p.name)+'</span>'
+        +'<span class="b '+(p.bal<0?'neg':'')+'">'+fmt(p.bal)+' <small>ج</small></span>'
+        +'<span class="s">قبض '+fmt(p.inn)+' · صرف '+fmt(p.out)+'</span></button>';
+    }).join('');
+  }
+  function fillSelects(){
+    var names=allNames(),opt=names.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
+    var keep=function(id,html,def){var el=$(id),v=el.value;el.innerHTML=html;if(v&&Array.prototype.some.call(el.options,function(o){return o.value===v}))el.value=v;else if(def)el.value=def};
+    keep('outName',names.length?opt:'<option value="">سجّل تحويل وارد أولًا</option>');
+    var all='<option value="all">كل الأشخاص</option>'+opt;
+    keep('fPerson',all,'all');keep('sPerson',all,'all');
+    $('fPerson').value=state.filterPerson;
+    if($('fPerson').value!==state.filterPerson){state.filterPerson='all';$('fPerson').value='all'}
+    $('namesList').innerHTML=names.map(function(n){return '<option value="'+esc(n)+'">'}).join('');
+  }
+  function filtered(){
+    var p=$('fPerson').value,t=$('fType').value,s=$('fStatus').value;
+    return state.entries.filter(function(e){
+      if(p!=='all'&&e.person!==p)return false;
+      if(t!=='all'&&e.type!==t)return false;
+      if(s==='active'&&e.cancelled)return false;
+      if(s==='cx'&&!e.cancelled)return false;
+      return true;
+    }).sort(function(a,b){return b.dt-a.dt});
+  }
+  function renderRows(){
+    var list=filtered(),tb=$('rows');
+    $('count').textContent=list.length+' قيد';
+    if(!list.length){tb.innerHTML='<tr><td colspan="7" class="empty">لسه مفيش قيود</td></tr>';return}
+    tb.innerHTML=list.map(function(e){
+      var note=esc(e.acct||'')+(e.cancelled&&e.reason?' <span class="tag">ملغي: '+esc(e.reason)+'</span>':e.cancelled?' <span class="tag">ملغي</span>':'');
+      return '<tr class="'+(e.cancelled?'cx':'')+'"><td>'+fdt(e.dt)+'</td>'
+        +'<td><span class="tag" style="color:var(--'+e.type+')">'+(e.type==='in'?'قبض':'صرف')+'</span></td>'
+        +'<td>'+esc(e.person)+'</td>'
+        +'<td class="amt '+e.type+'">'+(e.type==='in'?'+':'−')+fmt(e.amount)+'</td>'
+        +'<td>'+esc(e.desc||'')+'</td><td>'+note+'</td>'
+        +'<td class="act">'+(e.cancelled?'':'<div class="actions"><button class="small" data-edit="'+e.id+'">تعديل</button><button class="small danger" data-cx="'+e.id+'">إلغاء</button></div>')+'</td></tr>';
+    }).join('');
+  }
+  function renderStmtSum(){
+    var l=stmtList(),i=0,o=0;
+    l.forEach(function(e){if(e.type==='in')i+=e.amount;else o+=e.amount});
+    $('sSum').textContent=l.length?('عدد القيود '+l.length+' · قبض '+fmt(i)+' · صرف '+fmt(o)+' · الصافي '+fmt(i-o)+' جنيه'):'مفيش قيود سارية في الفترة دي';
+  }
+  function renderAll(){renderPeople();fillSelects();renderRows();renderStmtSum();$('demoBanner').hidden=!state.demo}
+
+  function stmtList(){
+    var p=$('sPerson').value||'all',f=$('sFrom').value,t=$('sTo').value;
+    var from=f?new Date(f+'T00:00:00').getTime():-Infinity,to=t?new Date(t+'T23:59:59').getTime():Infinity;
+    return state.entries.filter(function(e){return !e.cancelled&&(p==='all'||e.person===p)&&e.dt>=from&&e.dt<=to}).sort(function(a,b){return a.dt-b.dt});
+  }
+  function copy(text,okMsg){
+    function fallback(){
+      var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();
+      var ok=false;try{ok=document.execCommand('copy')}catch(e){}
+      document.body.removeChild(ta);toast(ok?okMsg:'تعذّر النسخ، جرّب مرة تانية');
+    }
+    try{navigator.clipboard.writeText(text).then(function(){toast(okMsg)},fallback)}catch(e){fallback()}
+  }
+  $('copyTsv').onclick=function(){
+    var rows=[['التاريخ','النوع','الشخص','المبلغ','البيان','الحساب / ملاحظات']];
+    stmtList().forEach(function(e){rows.push([fdt(e.dt),e.type==='in'?'قبض':'صرف',e.person,(e.type==='in'?'':'-')+e.amount,e.desc||'',e.acct||''])});
+    copy(rows.map(function(r){return r.join('\t')}).join('\n'),'اتنسخ الكشف، الصقه في Excel');
+  };
+  $('copyText').onclick=function(){
+    var l=stmtList(),i=0,o=0,p=$('sPerson').value;
+    var lines=['كشف حساب '+(p&&p!=='all'?p:'كل الأشخاص')];
+    l.forEach(function(e){
+      if(e.type==='in')i+=e.amount;else o+=e.amount;
+      lines.push(fdt(e.dt)+' | '+(e.type==='in'?'قبض':'صرف')+' | '+fmt(e.amount)+' | '+(e.desc||''));
+    });
+    lines.push('قبض '+fmt(i)+' · صرف '+fmt(o)+' · الصافي '+fmt(i-o)+' جنيه');
+    copy(lines.join('\n'),'اتنسخ الكشف كنص');
+  };
+
+  function nextId(){return state.entries.reduce(function(m,e){return Math.max(m,e.id)},0)+1}
+  function leaveDemo(){if(state.demo){state.entries=[];state.demo=false}}
+
+  $('formIn').onsubmit=function(ev){
+    ev.preventDefault();
+    var amt=parseFloat($('inAmt').value),name=$('inName').value.trim();
+    if(!name||!(amt>0)){$('inErr').textContent='اكتب اسم المُرسِل ومبلغ أكبر من صفر.';return}
+    leaveDemo();
+    state.entries.push({id:nextId(),type:'in',person:name,amount:amt,dt:new Date($('inDt').value).getTime()||Date.now(),desc:$('inDesc').value.trim(),acct:$('inAcct').value});
+    save();$('inErr').textContent='';$('formIn').reset();$('inDt').value=nowInput();renderAll();toast('اتسجل التحويل');
+  };
+  $('formOut').onsubmit=function(ev){
+    ev.preventDefault();
+    var amt=parseFloat($('outAmt').value),name=$('outName').value;
+    if(!name){$('outErr').textContent='سجّل تحويل وارد الأول عشان تصرف منه.';return}
+    if(!(amt>0)){$('outErr').textContent='اكتب مبلغ أكبر من صفر.';return}
+    var b=balances().filter(function(p){return p.name===name})[0];
+    if(b&&amt>b.bal+0.001){$('outErr').textContent='المبلغ أكبر من رصيد '+name+' ('+fmt(b.bal)+' جنيه).';return}
+    state.entries.push({id:nextId(),type:'out',person:name,amount:amt,dt:new Date($('outDt').value).getTime()||Date.now(),desc:$('outDesc').value.trim(),acct:$('outNote').value.trim()});
+    save();$('outErr').textContent='';$('formOut').reset();$('outDt').value=nowInput();renderAll();toast('اتسجل الصرف');
+  };
+
+  $('people').onclick=function(ev){
+    var b=ev.target.closest('.person');if(!b)return;
+    var n=b.getAttribute('data-p');state.filterPerson=state.filterPerson===n?'all':n;
+    $('fPerson').value=state.filterPerson;renderPeople();renderRows();
+  };
+  ['fPerson','fType','fStatus'].forEach(function(id){$(id).onchange=function(){if(id==='fPerson'){state.filterPerson=$('fPerson').value;renderPeople()}renderRows()}});
+  ['sPerson','sFrom','sTo'].forEach(function(id){$(id).onchange=renderStmtSum});
+
+  $('rows').onclick=function(ev){
+    var e=ev.target.closest('button');if(!e)return;
+    var ed=e.getAttribute('data-edit'),cx=e.getAttribute('data-cx');
+    if(ed){
+      var x=state.entries.filter(function(y){return y.id==ed})[0];if(!x)return;
+      editId=x.id;$('eType').value=x.type;$('ePerson').value=x.person;$('eAmt').value=x.amount;$('eDt').value=toLocalInput(x.dt);$('eDesc').value=x.desc||'';$('eAcct').value=x.acct||'';$('editOv').hidden=false;
+    }
+    if(cx){
+      var y=state.entries.filter(function(z){return z.id==cx})[0];if(!y)return;
+      cxId=y.id;$('cxInfo').textContent=(y.type==='in'?'قبض':'صرف')+' · '+y.person+' · '+fmt(y.amount)+' جنيه';$('cxReason').value='';$('cxOv').hidden=false;
+    }
+  };
+  $('eClose').onclick=function(){$('editOv').hidden=true};
+  $('cxClose').onclick=function(){$('cxOv').hidden=true};
+  $('editForm').onsubmit=function(ev){
+    ev.preventDefault();
+    var x=state.entries.filter(function(y){return y.id===editId})[0];if(!x)return;
+    var amt=parseFloat($('eAmt').value);if(!(amt>0))return;
+    x.type=$('eType').value;x.person=$('ePerson').value.trim()||x.person;x.amount=amt;x.dt=new Date($('eDt').value).getTime()||x.dt;x.desc=$('eDesc').value.trim();x.acct=$('eAcct').value.trim();
+    save();$('editOv').hidden=true;renderAll();toast('اتحفظت التعديلات');
+  };
+  $('cxForm').onsubmit=function(ev){
+    ev.preventDefault();
+    var x=state.entries.filter(function(y){return y.id===cxId})[0];if(!x)return;
+    x.cancelled=true;x.reason=$('cxReason').value.trim();
+    save();$('cxOv').hidden=true;renderAll();toast('اتلغى القيد');
+  };
+  $('clearDemo').onclick=function(){state.entries=[];state.demo=false;state.filterPerson='all';save();renderAll()};
+
+  $('inDt').value=nowInput();$('outDt').value=nowInput();
+  renderAll();
+  var unsub=null;
+  onAuthStateChanged(auth,function(u){
+    if(unsub){unsub();unsub=null}
+    $('loginOv').hidden=!!u;$('logout').hidden=!u;
+    if(!u){state.entries=[];renderAll();return}
+    unsub=onSnapshot(ref,function(snap){
+      state.entries=snap.exists()&&Array.isArray(snap.data().entries)?snap.data().entries:[];
+      state.demo=false;renderAll();
+    },function(){toast('مفيش صلاحية أو الاتصال فاصل')});
+  });
+  $('loginForm').onsubmit=function(ev){
+    ev.preventDefault();$('lErr').textContent='';
+    signInWithEmailAndPassword(auth,$('lEmail').value.trim(),$('lPass').value).catch(function(){$('lErr').textContent='الإيميل أو كلمة السر غلط.'});
+  };
+  $('logout').onclick=function(){signOut(auth)};
+})();
+</script>
+</body></html>
