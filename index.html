@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>دفتر التحويلات</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&family=Readex+Pro:wght@500;700&family=Sora:wght@600;700&display=swap">
 <style>
 /* Layout: single-column ledger book. Balances on top, two entry forms side by side, full ledger table, statement export. */
 :root{
@@ -10,12 +10,7 @@
   --font-display:'Readex Pro','Segoe UI',Tahoma,sans-serif;
   --font-body:'IBM Plex Sans Arabic','Segoe UI',Tahoma,sans-serif;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f1a1b; --surface:#172426; --ink:#e4eeed; --muted:#8fa6a7; --line:#2a3d3f;
-  --accent:#4fc3b8; --accent-ink:#06201e; --in:#5ccf94; --out:#ef8a78; --warn-bg:#3a3014; --warn-ink:#f2d98a; --soft:#1f3133; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0f1a1b; --surface:#172426; --ink:#e4eeed; --muted:#8fa6a7; --line:#2a3d3f;
-  --accent:#4fc3b8; --accent-ink:#06201e; --in:#5ccf94; --out:#ef8a78; --warn-bg:#3a3014; --warn-ink:#f2d98a; --soft:#1f3133; color-scheme:dark}
+html{color-scheme:light}
 [hidden]{display:none!important}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6;direction:rtl;
@@ -73,6 +68,44 @@ tr.cx td.act,tr.cx td.act *{text-decoration:none}
 .stmt{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px}
 .stmt .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
 .login{background:var(--surface);border-radius:8px;padding:20px;width:min(380px,100%);display:flex;flex-direction:column;gap:12px}
+#printArea{display:none}
+@media print{
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body>*:not(#printArea){display:none!important}
+  body{background:#fff!important;color:#14282b!important;padding:0!important}
+  #printArea{display:block!important;direction:rtl;font-family:var(--font-body);color:#14282b;background:#fff;font-size:12px;line-height:1.55}
+  .st-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:3px solid #0f6b66;position:relative}
+  .st-head:after{content:"";position:absolute;right:0;bottom:-3px;width:90px;height:3px;background:#b8893b}
+  .st-logo{direction:ltr;display:block}
+  .st-title{text-align:right}
+  .st-title h1{font-family:var(--font-display);font-size:26px;margin:0;color:#0f6b66;letter-spacing:0}
+  .st-title .sub{font-size:11px;color:#6b7c7e;letter-spacing:.06em;margin-top:2px}
+  .st-info{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin:16px 0;border:1px solid #d5dfde;border-radius:6px;overflow:hidden}
+  .st-info div{padding:9px 12px;border-left:1px solid #d5dfde}
+  .st-info div:last-child{border-left:0}
+  .st-info small{display:block;color:#6b7c7e;font-size:10px;margin-bottom:2px}
+  .st-info b{font-size:12.5px}
+  .st-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+  .st-sum div{border:1px solid #d5dfde;border-radius:6px;padding:10px 14px;background:#f6f9f8}
+  .st-sum div.net{background:#0f6b66;border-color:#0f6b66;color:#fff}
+  .st-sum small{display:block;font-size:10.5px;color:#6b7c7e}
+  .st-sum .net small{color:#cfe6e3}
+  .st-sum b{font-family:var(--font-display);font-size:19px;font-variant-numeric:tabular-nums}
+  .st-sum b em{font-style:normal;font-size:11px;font-weight:500;margin-right:4px}
+  #printArea table{min-width:0;width:100%;border-collapse:collapse;font-size:11.5px}
+  #printArea th{background:#14282b;color:#fff;font-weight:600;padding:8px 9px;text-align:right;border:0;font-size:11px}
+  #printArea td{padding:7px 9px;border:0;border-bottom:1px solid #e3eae9;text-align:right;background:#fff;color:#14282b;opacity:1;text-decoration:none}
+  #printArea tbody tr:nth-child(even) td{background:#f6f9f8}
+  #printArea td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+  #printArea td.i{color:#1a7f4b;font-weight:600}
+  #printArea td.o{color:#b4412f;font-weight:600}
+  #printArea tr{page-break-inside:avoid}
+  #printArea tfoot td{background:#e3eef0;font-weight:700;border-top:2px solid #0f6b66;border-bottom:0}
+  .st-foot{position:fixed;bottom:0;right:0;left:0;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #d5dfde;padding-top:7px;font-size:10px;color:#6b7c7e}
+  .st-foot .bn{font-family:'Sora',sans-serif;font-weight:700;color:#0f6b66;direction:ltr}
+  .st-note{margin-top:14px;font-size:10.5px;color:#6b7c7e}
+  @page{size:A4;margin:14mm 14mm 18mm}
+}
 </style>
 </head><body>
 
@@ -156,6 +189,7 @@ tr.cx td.act,tr.cx td.act *{text-decoration:none}
     <div style="display:flex;gap:8px;flex-wrap:wrap">
       <button class="primary" id="copyTsv">نسخ للصقه في Excel</button>
       <button id="copyText">نسخ كنص للواتساب</button>
+      <button id="pdfBtn">حفظ PDF / طباعة</button>
     </div>
   </section>
 </div>
@@ -193,6 +227,7 @@ tr.cx td.act,tr.cx td.act *{text-decoration:none}
     <button class="primary" type="submit">دخول</button>
   </form>
 </div>
+<div id="printArea"></div>
 <div class="toast" id="toast" hidden></div>
 
 <script type="module">
@@ -317,6 +352,33 @@ const ref=doc(db,'ledger','main');
     });
     lines.push('قبض '+fmt(i)+' · صرف '+fmt(o)+' · الصافي '+fmt(i-o)+' جنيه');
     copy(lines.join('\n'),'اتنسخ الكشف كنص');
+  };
+
+  var LOGO='<svg class="st-logo" width="176" height="46" viewBox="0 0 230 60" xmlns="http://www.w3.org/2000/svg"><rect width="56" height="56" y="2" rx="14" fill="#0f6b66"/><path fill-rule="evenodd" fill="#fff" d="M17 15h13a8 8 0 0 1 3.2 15.3A8.7 8.7 0 0 1 31 46H17zM24 21v6h5.2a3 3 0 0 0 0-6zM24 33v7h6.4a3.5 3.5 0 0 0 0-7z"/><circle cx="45" cy="45" r="4.2" fill="#b8893b"/><text x="70" y="38" font-family="Sora,Segoe UI,Arial,sans-serif" font-weight="700" font-size="31" fill="#14282b" letter-spacing="-.5">Basiony</text><text x="71" y="54" font-family="Sora,Segoe UI,Arial,sans-serif" font-weight="600" font-size="8.5" fill="#b8893b" letter-spacing="3.2">FINANCIAL LEDGER</text></svg>';
+  $('pdfBtn').onclick=function(){
+    var l=stmtList(),p=$('sPerson').value,f=$('sFrom').value,t=$('sTo').value,i=0,o=0,run=0;
+    var rows=l.map(function(e){
+      if(e.type==='in'){i+=e.amount;run+=e.amount}else{o+=e.amount;run-=e.amount}
+      return '<tr><td class="n">'+fdt(e.dt)+'</td><td>'+(e.type==='in'?'قبض':'صرف')+'</td>'+(p==='all'||!p?'<td>'+esc(e.person)+'</td>':'')
+        +'<td class="n i">'+(e.type==='in'?fmt(e.amount):'')+'</td><td class="n o">'+(e.type==='out'?fmt(e.amount):'')+'</td><td class="n">'+fmt(run)+'</td><td>'+esc(e.desc||'')+(e.acct?' <span style="color:#6b7c7e">· '+esc(e.acct)+'</span>':'')+'</td></tr>';
+    }).join('');
+    var all=(p==='all'||!p),cols=all?7:6;
+    var d=new Date(),no='BS-'+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'-'+String(Date.now()).slice(-4);
+    $('printArea').innerHTML=
+      '<div class="st-head">'+LOGO+'<div class="st-title"><h1>كشف حساب</h1><div class="sub">ACCOUNT STATEMENT</div></div></div>'
+      +'<div class="st-info"><div><small>اسم العميل</small><b>'+esc(all?'كل الأشخاص':p)+'</b></div>'
+      +'<div><small>الفترة</small><b>'+(f||'من البداية')+' ← '+(t||'اليوم')+'</b></div>'
+      +'<div><small>تاريخ الإصدار</small><b>'+fdt(Date.now())+'</b></div>'
+      +'<div><small>رقم الكشف</small><b style="direction:ltr;display:inline-block">'+no+'</b></div></div>'
+      +'<div class="st-sum"><div><small>إجمالي القبض</small><b>'+fmt(i)+'<em>ج.م</em></b></div>'
+      +'<div><small>إجمالي الصرف</small><b>'+fmt(o)+'<em>ج.م</em></b></div>'
+      +'<div class="net"><small>الرصيد الصافي</small><b>'+fmt(i-o)+'<em>ج.م</em></b></div></div>'
+      +'<table><thead><tr><th>التاريخ</th><th>النوع</th>'+(all?'<th>الشخص</th>':'')+'<th>قبض</th><th>صرف</th><th>الرصيد</th><th>البيان</th></tr></thead><tbody>'
+      +(rows||'<tr><td colspan="'+cols+'" style="text-align:center;padding:18px">لا توجد قيود سارية في الفترة المحددة</td></tr>')
+      +'</tbody><tfoot><tr><td colspan="'+(all?3:2)+'">الإجمالي (جنيه مصري)</td><td class="n">'+fmt(i)+'</td><td class="n">'+fmt(o)+'</td><td class="n">'+fmt(i-o)+'</td><td></td></tr></tfoot></table>'
+      +'<div class="st-note">القيود الملغاة غير مدرجة في هذا الكشف. الرصيد المعروض هو الرصيد التراكمي بعد كل قيد.</div>'
+      +'<div class="st-foot"><span>كشف حساب صادر إلكترونيًا ولا يحتاج إلى توقيع</span><span class="bn">Basiony</span></div>';
+    setTimeout(function(){window.print()},80);
   };
 
   function nextId(){return state.entries.reduce(function(m,e){return Math.max(m,e.id)},0)+1}
