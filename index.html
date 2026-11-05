@@ -16,6 +16,7 @@
 :root[data-theme="dark"]{
   --bg:#0f1a1b; --surface:#172426; --ink:#e4eeed; --muted:#8fa6a7; --line:#2a3d3f;
   --accent:#4fc3b8; --accent-ink:#06201e; --in:#5ccf94; --out:#ef8a78; --warn-bg:#3a3014; --warn-ink:#f2d98a; --soft:#1f3133; color-scheme:dark}
+[hidden]{display:none!important}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.6;direction:rtl;
   padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -391,7 +392,7 @@ const ref=doc(db,'ledger','main');
   });
   $('loginForm').onsubmit=function(ev){
     ev.preventDefault();$('lErr').textContent='';
-    signInWithEmailAndPassword(auth,$('lEmail').value.trim(),$('lPass').value).catch(function(){$('lErr').textContent='الإيميل أو كلمة السر غلط.'});
+    signInWithEmailAndPassword(auth,$('lEmail').value.trim(),$('lPass').value).catch(function(e){var c=(e&&e.code)||'';$('lErr').textContent=(c==='auth/invalid-credential'||c==='auth/wrong-password'||c==='auth/user-not-found'?'الإيميل أو كلمة السر غلط.':'تعذّر الدخول. كود الخطأ: '+c)});
   };
   $('logout').onclick=function(){signOut(auth)};
 })();
